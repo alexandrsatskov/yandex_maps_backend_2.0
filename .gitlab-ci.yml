@@ -18,7 +18,6 @@ backend:build:python:
   rules:
     - if: $CI_COMMIT_BRANCH
   before_script:
-    - cd $CI_PROJECT_NAME
     - python3.8 -m venv env
     - env/bin/pip install -U pip
     - env/bin/pip install -U '.[dev]
