@@ -1,0 +1,34 @@
+# Общие настройки
+
+stages:
+  - build
+  - test
+
+services:
+  - postgis/postgis
+variables:
+  POSTGRES_DB: analyzer
+  POSTGRES_USER: user
+  POSTGRES_PASSWORD: hackme
+  POSTGRES_HOST_AUTH_METHOD: trust
+
+backend:build:python:
+  stage: build
+  image: snakepacker/python:all
+  rules:
+    - if: $CI_COMMIT_BRANCH
+  before_script:
+    - cd $CI_PROJECT_NAME
+    - python3.8 -m venv env
+    - env/bin/pip install -U pip
+    - env/bin/pip install -U '.[dev]
+    - source env/bin/activate
+  script:
+    - echo 1
+
+backend:pytest:
+  stage: test
+  rules:
+    - if: $CI_COMMIT_BRANCH
+  script:
+    - pytest -vv
