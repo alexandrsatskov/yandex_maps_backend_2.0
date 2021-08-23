@@ -2,7 +2,6 @@
 
 stages:
   - build
-  - test
 
 services:
   - postgis/postgis
@@ -22,12 +21,5 @@ backend:build:python:
     - env/bin/pip install -U pip
     - env/bin/pip install -U '.[dev]'
     - source env/bin/activate
-  script:
-    - echo 1
-
-backend:pytest:
-  stage: test
-  rules:
-    - if: $CI_COMMIT_BRANCH
   script:
     - pytest -vv
