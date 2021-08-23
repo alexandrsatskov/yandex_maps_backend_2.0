@@ -20,7 +20,7 @@ backend:build:python:
   before_script:
     - python3.8 -m venv env
     - env/bin/pip install -U pip
-    - env/bin/pip install -U '.[dev]
+    - env/bin/pip install -U '.[dev]'
     - source env/bin/activate
   script:
     - echo 1
