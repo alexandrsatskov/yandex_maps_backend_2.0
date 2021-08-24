@@ -74,3 +74,39 @@ def _add_http_method_to_oas(
         _OASResponseBuilder(oas, oas_operation, status_code_descriptions).build(
             return_type
         )
+
+
+from functools import update_wrapper
+from inspect import iscoroutinefunction
+from typing import Callable, Iterable
+
+from aiohttp.web import json_response
+from pydantic import ValidationError
+from aiohttp_pydantic.injectors import AbstractInjector
+
+
+def inject_params(
+    handler, parse_func_signature: Callable[[Callable], Iterable[AbstractInjector]]
+):
+    """
+    Decorator to unpack the query string, route path, body and http header in
+    the parameters of the web handler regarding annotations.
+    """
+    injectors = parse_func_signature(handler)
+
+    async def wrapped_handler(self):
+        args = []
+        kwargs = {}
+        for injector in injectors:
+            try:
+                if iscoroutinefunction(injector.inject):
+                    await injector.inject(self.request, args, kwargs)
+                else:
+                    injector.inject(self.request, args, kwargs)
+            except ValidationError as error:
+                raise error
+
+        return await handler(self, *args, **kwargs)
+
+    update_wrapper(wrapped_handler, handler)
+    return wrapped_handler

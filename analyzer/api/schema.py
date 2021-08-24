@@ -13,7 +13,7 @@
 """
 from dataclasses import dataclass
 from enum import Enum, unique
-from typing import Union, List, Dict, Optional
+from typing import Union, List, Dict, Optional, Any
 
 from pydantic import (
     BaseModel, EmailStr,
@@ -42,9 +42,9 @@ class PlaceState(int, Enum):
 
 
 class ErrorSchema(BaseModel):
-    code: str
-    message: str
-    # fields: Optional[Dict]
+    reason: str
+    text: Optional[str]
+    fields: Optional[List[Dict[str, Any]]]
 
 
 class ErrorResponseSchema(BaseModel):

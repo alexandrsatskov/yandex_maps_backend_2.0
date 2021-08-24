@@ -1,8 +1,7 @@
 from http import HTTPStatus
-from typing import Tuple, Optional, Union, Iterable
+from typing import Tuple, Optional, Union
 
 from aiohttp.web_response import json_response
-from aiohttp.web_exceptions import HTTPBadRequest
 
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r400, r201
@@ -15,6 +14,7 @@ from sqlalchemy.dialects.postgresql import insert
 from analyzer.api import DEFAULT_PLACES
 from analyzer.api.handlers.base import BaseView
 from analyzer.api.schema import (
+    ErrorResponseSchema,
     GetVisitedPlacesResponse,
     PostVisitedPlacesRequest, PostVisitedPlacesResponse,
     ScreenResolution, UserContext, PlaceState
@@ -95,7 +95,7 @@ class UserVisitedPlaces(PydanticView, BaseView):
         device_height: Optional[Union[int, float]] = EMULATOR_SCREEN.height,
         user_context: Optional[UserContext] = UserContext.ugc,
         *, token: Optional[str] = '',
-    ) -> Union[r200[GetVisitedPlacesResponse], r400[HTTPBadRequest]]:
+    ) -> Union[r200[GetVisitedPlacesResponse], r400[ErrorResponseSchema]]:
         # TODO: add token, and json_response 401 (unauthorized)
         # Return value
         places = []
@@ -216,7 +216,8 @@ class UserVisitedPlaces(PydanticView, BaseView):
     async def post(
         self, place: PostVisitedPlacesRequest,
         *, token: Optional[str] = '',
-    ) -> Union[r201[PostVisitedPlacesResponse]]:
+    ) -> Union[r201[PostVisitedPlacesResponse], r400[ErrorResponseSchema]]:
+
         async with self.pg.begin() as conn:
             user_email = place.user_email
             place_uid = place.place_uid

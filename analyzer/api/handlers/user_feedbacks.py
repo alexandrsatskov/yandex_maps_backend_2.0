@@ -4,12 +4,12 @@ from typing import Optional, Union
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r400, r201
 from aiohttp.web_response import json_response
-from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from analyzer.api.handlers.base import BaseView
 from analyzer.api.schema import (
+    ErrorResponseSchema,
     GetUserFeedbacksResponse,
     PostUserFeedbacksRequest, PostUserFeedbacksResponse,
 )
@@ -24,7 +24,7 @@ class UserFeedbacks(PydanticView, BaseView):
     async def get(
         self, user_email: Optional[str] = 'maps@.y.r',
         *, token: Optional[str] = '',
-    ) -> Union[r200[GetUserFeedbacksResponse], r400[HTTPBadRequest]]:
+    ) -> Union[r200[GetUserFeedbacksResponse], r400[ErrorResponseSchema]]:
         await self.check_email_exists(user_email)
 
         stmt = (
@@ -50,7 +50,7 @@ class UserFeedbacks(PydanticView, BaseView):
     async def post(
         self, feedback: PostUserFeedbacksRequest,
         *, token: Optional[str] = '',
-    ) -> Union[r201[PostUserFeedbacksResponse], r400[HTTPBadRequest]]:
+    ) -> Union[r201[PostUserFeedbacksResponse], r400[ErrorResponseSchema]]:
         user_email = feedback.user_email
         place_uid = feedback.place_uid
         feedback_rate = feedback.feedback_rate
