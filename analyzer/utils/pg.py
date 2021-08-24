@@ -1,7 +1,5 @@
 import logging
 import os
-import time
-from collections import AsyncIterable
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Union
@@ -9,10 +7,8 @@ from typing import Union
 from aiohttp.web_app import Application
 from alembic.config import Config
 from configargparse import Namespace
-from sqlalchemy import Numeric, cast, func, text
-from sqlalchemy.sql import Select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
-
 
 CENSORED = '***'
 DEFAULT_PG_URL = 'postgresql+asyncpg://user:hackme@localhost/analyzer'
@@ -30,8 +26,11 @@ async def setup_pg(app: Application, args: Namespace):
     log.info('Connecting to database: %s', db_info)
 
     # TODO: fix args.pg_url
-    app['pg'] = create_async_engine(DEFAULT_PG_URL)
     # app['pg'] = create_async_engine(args.pg_url)
+    app['pg'] = create_async_engine(
+        DEFAULT_PG_URL,
+        # echo=True
+    )
 
     # Проверяем что база жива и отвечает
     async with app['pg'].connect() as conn:

@@ -1,17 +1,19 @@
 from http import HTTPStatus
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional, Union, Iterable
 
 from aiohttp.web_response import json_response
 from aiohttp.web_exceptions import HTTPBadRequest
 
+from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r400, r201
 from pydantic import (
     confloat
 )
-
 from sqlalchemy import select, join, func, and_, between
 from sqlalchemy.dialects.postgresql import insert
 
+from analyzer.api import DEFAULT_PLACES
+from analyzer.api.handlers.base import BaseView
 from analyzer.api.schema import (
     GetVisitedPlacesResponse,
     PostVisitedPlacesRequest, PostVisitedPlacesResponse,
@@ -24,7 +26,6 @@ from analyzer.db.schema import (
     user_feedbacks_table as user_feedbacks_t
 )
 from analyzer.utils.emulator_specifications import EMULATOR_SCREEN, K_DICT
-from analyzer.api.handlers.base import BaseView
 
 
 def get_screen_coordinate_bounds(
@@ -77,7 +78,7 @@ def get_screen_coordinate_bounds(
     return tl_lat, tl_lon, br_lat, br_lon
 
 
-class UserVisitedPlaces(BaseView):
+class UserVisitedPlaces(PydanticView, BaseView):
     URL_PATH = '/visited_places'
 
     SRID = 4326
@@ -91,13 +92,28 @@ class UserVisitedPlaces(BaseView):
         zoom: confloat(ge=2, le=21) = 2,
         device_width: Optional[Union[int, float]] = EMULATOR_SCREEN.width,
         device_height: Optional[Union[int, float]] = EMULATOR_SCREEN.height,
-        user_context: Optional[UserContext] = UserContext.default,
+        user_context: Optional[UserContext] = UserContext.ugc,
         *, token: Optional[str] = '',
     ) -> Union[r200[GetVisitedPlacesResponse], r400[HTTPBadRequest]]:
         # TODO: add token, and json_response 401 (unauthorized)
-
-        await self.check_email_exists(user_email)
         places = []
+
+        if not await self.is_email_exists(user_email):
+            # ТЕСТОВАЯ ФУНКЦИОНАЛЬНОСТЬ
+            # Если юзера нет в базе, то добавляем для
+            # него заранее определенные места
+            # UPD: точки добавляются в файле миграции, поэтому
+            # остается только замапить точки на юзера
+            async with self.pg.begin() as conn:
+                await conn.execute(insert(user_t).values(user_email=user_email))
+
+                await conn.execute(
+                    insert(user_places_t),
+                    [
+                        {"user_email": user_email, "place_uid": p_uid}
+                        for p_uid, *_ in DEFAULT_PLACES
+                    ]
+                )
 
         device = ScreenResolution(device_width, device_height)
         point = self.WKT_POINT_TEMPLATE.format(longitude, latitude)
@@ -107,25 +123,33 @@ class UserVisitedPlaces(BaseView):
             get_screen_coordinate_bounds(device, latitude, longitude, zoom)
         )
 
-        uids = select([
-            user_places_t.c.place_uid
-        ]).where(
-            user_places_t.c.user_email == user_email
+        places_wo_feedback = (
+            select(user_feedbacks_t.c.place_uid)
+            .select_from(user_feedbacks_t)
+            .where(user_feedbacks_t.c.user_email == user_email)
         )
 
-        uids_wo_feedback = select([
-            uids.c.place_uid
-        ]).select_from(
-            join(
-                uids, user_feedbacks_t,
-                uids.c.place_uid == user_feedbacks_t.c.place_uid,
-                isouter=True
+        places = (
+            select(user_places_t.c.place_uid)
+                .select_from(
+                join(
+                    user_places_t, places_wo_feedback,
+                    user_places_t.c.place_uid == places_wo_feedback.c.place_uid,
+                    isouter=True
+                )
             )
-        ).where(
-            user_feedbacks_t.c.place_uid.is_(None)
+                .where(
+                and_(
+                    places_wo_feedback.c.place_uid.is_(None),
+                    user_places_t.c.user_email == user_email
+                )
+            )
         )
 
         stmt = (
+            # Запрос возвращает посещенные места у которых нет
+            # отзыва от текущего пользователя и которые находятся
+            # в пределах вьюпорта девайса пользователя
             select([
                 places_t.c.place_uid,
                 places_t.c.place_id,
@@ -134,8 +158,8 @@ class UserVisitedPlaces(BaseView):
             ])
                 .select_from(
                 join(
-                    places_t, uids_wo_feedback,
-                    places_t.c.place_uid == uids_wo_feedback.c.place_uid,
+                    places_t, places,
+                    places_t.c.place_uid == places.c.place_uid,
                 )
             )
                 .where(
@@ -161,6 +185,7 @@ class UserVisitedPlaces(BaseView):
             # mappings() возврает dict, вместо дефолтных туплов
             if place := res.mappings().first():
                 places = [{**place, "state": PlaceState.card}]
+
         else:
             async with self.pg.connect() as conn:
                 res = await conn.execute(stmt)
@@ -170,7 +195,7 @@ class UserVisitedPlaces(BaseView):
                 for place in res.mappings().all()
             ]
 
-            # Изменяем PlaceState на card для ближайшей точки
+            # Изменяем PlaceState на card для первой(ближайшей) точки
             if places:
                 places[0]['state'] = PlaceState.card
 
@@ -188,14 +213,14 @@ class UserVisitedPlaces(BaseView):
 
             # Если email пользователя не найден,
             # добавляем новую запись в таблицу users
-            query = (
+            stmt = (
                 insert(user_t)
                     .values(user_email=user_email)
                     .on_conflict_do_nothing()
             )
-            await conn.execute(query)
+            await conn.execute(stmt)
 
-            query = (
+            stmt = (
                 insert(places_t)
                     .values(
                     place_uid=place_uid,
@@ -204,9 +229,9 @@ class UserVisitedPlaces(BaseView):
                 )
                     .on_conflict_do_nothing()
             )
-            await conn.execute(query)
+            await conn.execute(stmt)
 
-            query = (
+            stmt = (
                 insert(user_places_t)
                     .values(
                     user_email=user_email,
@@ -218,7 +243,7 @@ class UserVisitedPlaces(BaseView):
                     set_=dict(user_email=user_email, place_uid=place_uid),
                 )
             )
-            place_uid = await conn.execute(query)
+            place_uid = await conn.execute(stmt)
 
         return json_response(
             {"place_uid": place_uid.scalar()},

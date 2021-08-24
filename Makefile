@@ -58,3 +58,13 @@ upload: docker
 	docker tag $(PROJECT_NAME):$(VERSION) $(REGISTRY_IMAGE):latest
 	docker push $(REGISTRY_IMAGE):$(VERSION)
 	docker push $(REGISTRY_IMAGE):latest
+
+pgprod:
+	docker stop analyzer-postgres || true
+	docker run --detach --name=pgprod \
+		--env POSTGRES_USER=user \
+		--env POSTGRES_PASSWORD=hackme \
+		--env POSTGRES_DB=analyzer \
+		--env PGDATA=/var/lib/postgresql/data/pgdata \
+ 		--volume /mnt:/var/lib/postgresql/data \
+		--publish 5432:5432 postgis/postgis

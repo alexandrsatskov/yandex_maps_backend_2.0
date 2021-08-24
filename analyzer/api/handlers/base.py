@@ -1,6 +1,6 @@
 from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import exists, select
-from aiohttp_pydantic import PydanticView
+from aiohttp.web import View
 from sqlalchemy.engine import Engine
 
 from analyzer.db.schema import (
@@ -9,12 +9,21 @@ from analyzer.db.schema import (
 )
 
 
-class BaseView(PydanticView):
+class BaseView(View):
     URL_PATH: str
 
     @property
     def pg(self) -> Engine:
         return self.request.app['pg']
+
+    async def is_email_exists(self, user_email):
+        stmt = select([
+            exists().where(users_t.c.user_email == user_email)
+        ])
+        async with self.pg.connect() as conn:
+            is_exists = await conn.execute(stmt)
+
+        return is_exists.scalar()
 
     async def check_email_exists(self, user_email):
         stmt = select([
