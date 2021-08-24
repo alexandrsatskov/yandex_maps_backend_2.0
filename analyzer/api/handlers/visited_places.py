@@ -83,6 +83,7 @@ class UserVisitedPlaces(PydanticView, BaseView):
 
     SRID = 4326
     WKT_POINT_TEMPLATE = 'POINT({} {})'
+    state_kw = 'state'
 
     async def get(
         self,
@@ -96,6 +97,7 @@ class UserVisitedPlaces(PydanticView, BaseView):
         *, token: Optional[str] = '',
     ) -> Union[r200[GetVisitedPlacesResponse], r400[HTTPBadRequest]]:
         # TODO: add token, and json_response 401 (unauthorized)
+        # Return value
         places = []
 
         if not await self.is_email_exists(user_email):
@@ -123,24 +125,24 @@ class UserVisitedPlaces(PydanticView, BaseView):
             get_screen_coordinate_bounds(device, latitude, longitude, zoom)
         )
 
-        places_wo_feedback = (
+        places_wo_feedback_stmt = (
             select(user_feedbacks_t.c.place_uid)
             .select_from(user_feedbacks_t)
             .where(user_feedbacks_t.c.user_email == user_email)
         )
 
-        places = (
+        places_stmt = (
             select(user_places_t.c.place_uid)
                 .select_from(
                 join(
-                    user_places_t, places_wo_feedback,
-                    user_places_t.c.place_uid == places_wo_feedback.c.place_uid,
+                    user_places_t, places_wo_feedback_stmt,
+                    user_places_t.c.place_uid == places_wo_feedback_stmt.c.place_uid,
                     isouter=True
                 )
             )
                 .where(
                 and_(
-                    places_wo_feedback.c.place_uid.is_(None),
+                    places_wo_feedback_stmt.c.place_uid.is_(None),
                     user_places_t.c.user_email == user_email
                 )
             )
@@ -158,8 +160,8 @@ class UserVisitedPlaces(PydanticView, BaseView):
             ])
                 .select_from(
                 join(
-                    places_t, places,
-                    places_t.c.place_uid == places.c.place_uid,
+                    places_t, places_stmt,
+                    places_t.c.place_uid == places_stmt.c.place_uid,
                 )
             )
                 .where(
@@ -184,20 +186,30 @@ class UserVisitedPlaces(PydanticView, BaseView):
             # вернул отсортированный по дистанции список
             # mappings() возврает dict, вместо дефолтных туплов
             if place := res.mappings().first():
-                places = [{**place, "state": PlaceState.card}]
+                places = [{**place, 'state': PlaceState.card}]
 
         else:
             async with self.pg.connect() as conn:
                 res = await conn.execute(stmt)
 
             places = [
-                {**place, "state": PlaceState.plain_point}
+                {**place, 'state': PlaceState.plain_point}
                 for place in res.mappings().all()
             ]
 
-            # Изменяем PlaceState на card для первой(ближайшей) точки
+            # Изменяем PlaceState точек по критериям:
+            # каждая четвертая - state=3, каждая третья - state=4, остальные - state=5.
+            i = 1
+            for place in places:
+                if i % 3 == 0:
+                    place['state'] = PlaceState.ico_wo_txt
+                if i % 4 == 0:
+                    place['state'] = PlaceState.ico_w_txt
+                i += 1
+
+            # Изменяем PlaceState на icon with text для первой(ближайшей) точки
             if places:
-                places[0]['state'] = PlaceState.card
+                places[0]['state'] = PlaceState.ico_w_txt
 
         return json_response({"places": places}, status=HTTPStatus.OK)
 

@@ -37,7 +37,7 @@ class PlaceState(int, Enum):
     card = 1
     ico_btfl = 2
     ico_w_txt = 3
-    icon_wo_txt = 4
+    ico_wo_txt = 4
     plain_point = 5
 
 

@@ -51,21 +51,13 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_email'], ['users.user_email'], name=op.f('fk__user_places__user_email__users')),
     sa.PrimaryKeyConstraint('user_email', 'place_uid', name=op.f('pk__user_places'))
     )
-    # INSERT INTO places (place_uid, place_id, place_title, coordinates)
-    # VALUES
-    # ('ymapsbm1://org?oid=1627768090', 2237273830, 'DEFAULT_PLACE', 'POINT(56.173378 58.000049)'),
-    # ('ymapsbm1://org?oid=1627768091', 2237273831, 'DEFAULT_PLACE', 'POINT(44.173378 44.000049)'),
-    # ('ymapsbm1://org?oid=1627768092', 2237273832, 'DEFAULT_PLACE', 'POINT(33.173378 33.000049)'),
-    # ('ymapsbm1://org?oid=1627768093', 2237273833, 'DEFAULT_PLACE', 'POINT(22.173378 22.000049)'),
-    # ('ymapsbm1://org?oid=1627768094', 2237273834, 'DEFAULT_PLACE', 'POINT(11.173378 11.000049)')
-    # ON CONFLICT DO NOTHING;
     op.bulk_insert(
         places_t,
         [
             {"place_uid": p_uid, "place_id": p_id,
-             "place_title": 'DEFAULT_PLACE',
+             "place_title": f'DEFAULT_PLACE_{p_title}',
              "coordinates": 'POINT({} {})'.format(lon, lat)}
-            for p_uid, p_id, lat, lon in DEFAULT_PLACES
+            for p_uid, p_id, lat, lon, p_title in DEFAULT_PLACES
         ]
     )
     # ### end Alembic commands ###
