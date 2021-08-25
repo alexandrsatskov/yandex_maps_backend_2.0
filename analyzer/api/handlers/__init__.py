@@ -3,6 +3,6 @@ from analyzer.api.handlers.visited_places import UserVisitedPlaces
 
 
 HANDLERS = (
-    UserFeedbacks,
     UserVisitedPlaces,
+    UserFeedbacks,
 )

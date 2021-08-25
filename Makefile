@@ -1,4 +1,4 @@
-PROJECT_NAME ?= back
+PROJECT_NAME ?= yandexmapsbackend
 VERSION = $(shell python3 setup.py --version | tr '+' '-')
 PROJECT_NAMESPACE ?= satskov
 REGISTRY_IMAGE ?= $(PROJECT_NAMESPACE)/$(PROJECT_NAME)
@@ -7,8 +7,9 @@ all:
 	@echo "make devenv		- Create & setup development virtual environment"
 	@echo "make lint		- Check code with pylama"
 	@echo "make postgres	- Start postgres container"
+	@echo "make pgprod		- Start postgres container with volume"
 	@echo "make clean		- Remove files created by distutils"
-	@echo "make test		- Run tests"
+	@echo "make pytest		- Run tests"
 	@echo "make sdist		- Make source distribution"
 	@echo "make docker		- Build a docker image"
 	@echo "make upload		- Upload docker image to the registry"
@@ -37,14 +38,24 @@ postgres:
 		--env POSTGRES_DB=analyzer \
 		--publish 5432:5432 postgis/postgis
 
+pgprod:
+	docker stop analyzer-postgres || true
+	docker run --detach --name=pgprod \
+		--env POSTGRES_USER=user \
+		--env POSTGRES_PASSWORD=hackme \
+		--env POSTGRES_DB=analyzer \
+		--env PGDATA=/var/lib/postgresql/data/pgdata \
+ 		--volume /mnt:/var/lib/postgresql/data \
+		--publish 5432:5432 postgis/postgis
+
 migrations:
 	(cd ./analyzer && alembic revision --autogenerate)
 
 migrate:
 	(cd ./analyzer && alembic upgrade head)
 
-test: lint postgres
-	env/bin/pytest -vv --cov=analyzer --cov-report=term-missing tests
+pytest:
+	env/bin/pytest -vv --cov=analyzer --cov-report=term-missing tests -x
 
 sdist: clean
 	# официальный способ дистрибуции python-модулей
@@ -58,13 +69,3 @@ upload: docker
 	docker tag $(PROJECT_NAME):$(VERSION) $(REGISTRY_IMAGE):latest
 	docker push $(REGISTRY_IMAGE):$(VERSION)
 	docker push $(REGISTRY_IMAGE):latest
-
-pgprod:
-	docker stop analyzer-postgres || true
-	docker run --detach --name=pgprod \
-		--env POSTGRES_USER=user \
-		--env POSTGRES_PASSWORD=hackme \
-		--env POSTGRES_DB=analyzer \
-		--env PGDATA=/var/lib/postgresql/data/pgdata \
- 		--volume /mnt:/var/lib/postgresql/data \
-		--publish 5432:5432 postgis/postgis

@@ -1,6 +1,13 @@
-"""
-REST API бекенд
-"""
+from analyzer.utils.monkey_patching_aiohttp_pydantic import (
+    _add_http_method_to_oas, inject_params
+)
+# [START] monkey patching
+from aiohttp_pydantic import oas
+from aiohttp_pydantic import view
+oas.view._add_http_method_to_oas = _add_http_method_to_oas
+view.inject_params = inject_params
+# [END] monkey patching
+
 import argparse
 import logging
 import os
@@ -17,7 +24,6 @@ from yarl import URL
 from analyzer.api.app import create_app
 from analyzer.utils.argparse import clear_environ, positive_int
 from analyzer.utils.pg import DEFAULT_PG_URL
-
 
 ENV_VAR_PREFIX = 'ANALYZER_'
 

@@ -42,8 +42,8 @@ class PlaceState(int, Enum):
 
 
 class ErrorSchema(BaseModel):
-    reason: str
-    text: Optional[str]
+    code: str
+    message: str
     fields: Optional[List[Dict[str, Any]]]
 
 

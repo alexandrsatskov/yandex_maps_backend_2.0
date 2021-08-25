@@ -25,7 +25,7 @@ class UserFeedbacks(PydanticView, BaseView):
         self, user_email: Optional[str] = 'maps@.y.r',
         *, token: Optional[str] = '',
     ) -> Union[r200[GetUserFeedbacksResponse], r400[ErrorResponseSchema]]:
-        await self.check_email_exists(user_email)
+        await self.check_email(user_email)
 
         stmt = (
             select([
@@ -56,8 +56,7 @@ class UserFeedbacks(PydanticView, BaseView):
         feedback_rate = feedback.feedback_rate
         feedback_text = feedback.feedback_text
 
-        await self.check_email_exists(user_email)
-        await self.check_uid_exists(place_uid)
+        await self.check_user_was_here(user_email, place_uid)
 
         async with self.pg.begin() as conn:
             stmt = (

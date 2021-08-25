@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Union
@@ -12,11 +13,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 CENSORED = '***'
 DEFAULT_PG_URL = 'postgresql+asyncpg://user:hackme@localhost/analyzer'
-MAX_QUERY_ARGS = 32767
-MAX_INTEGER = 2147483647
-
 PROJECT_PATH = Path(__file__).parent.parent.resolve()
-
 
 log = logging.getLogger(__name__)
 
@@ -25,16 +22,16 @@ async def setup_pg(app: Application, args: Namespace):
     db_info = args.pg_url.with_password(CENSORED)
     log.info('Connecting to database: %s', db_info)
 
-    # TODO: fix args.pg_url
-    # app['pg'] = create_async_engine(args.pg_url)
-    app['pg'] = create_async_engine(
-        DEFAULT_PG_URL,
-        # echo=True
-    )
+    app['pg'] = create_async_engine(str(args.pg_url))
 
     # Проверяем что база жива и отвечает
-    async with app['pg'].connect() as conn:
-        await conn.execute(text('SELECT 1'))
+    try:
+        async with app['pg'].connect() as conn:
+            await conn.execute(text('SELECT 1'))
+    except Exception:
+        log.exception('Database connection is failed: %s', db_info)
+        sys.exit(f'Database connection is failed: {db_info}')
+
     log.info('Connected to database %s', db_info)
 
     yield
@@ -63,4 +60,5 @@ def make_alembic_config(cmd_opts: Union[Namespace, SimpleNamespace],
     if cmd_opts.pg_url:
         config.set_main_option('sqlalchemy.url', cmd_opts.pg_url)
 
+    print(config, type(config), str(config))
     return config

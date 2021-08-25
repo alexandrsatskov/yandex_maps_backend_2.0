@@ -1,3 +1,48 @@
+from functools import update_wrapper
+from inspect import iscoroutinefunction
+from typing import Callable, Iterable
+from aiohttp.web import json_response
+from pydantic import ValidationError
+from aiohttp_pydantic.injectors import AbstractInjector
+# CASE 2
+# aiohttp_pydantic не предоставляет возможность обрабатывать
+# ValidationError по своему усмотрению
+def inject_params(
+    handler, parse_func_signature: Callable[[Callable], Iterable[AbstractInjector]]
+):
+    """
+    Decorator to unpack the query string, route path, body and http header in
+    the parameters of the web handler regarding annotations.
+    """
+    injectors = parse_func_signature(handler)
+
+    async def wrapped_handler(self):
+        args = []
+        kwargs = {}
+        for injector in injectors:
+            try:
+                if iscoroutinefunction(injector.inject):
+                    await injector.inject(self.request, args, kwargs)
+                else:
+                    injector.inject(self.request, args, kwargs)
+            except ValidationError as error:
+                # БЫЛО:
+                # errors = error.errors()
+                # for error in errors:
+                #     error["in"] = injector.context
+                #
+                # return json_response(data=errors, status=400)
+
+                # СТАЛО:
+                # прокидываем исключение дальше, чтобы его
+                # поймал middleware exception handler
+                raise error
+
+        return await handler(self, *args, **kwargs)
+
+    update_wrapper(wrapped_handler, handler)
+    return wrapped_handler
+
 from inspect import getdoc
 from itertools import count
 from typing import Type
@@ -8,8 +53,10 @@ from aiohttp_pydantic.oas.view import (
     docstring_parser, _handle_optional,
     _OASResponseBuilder
 )
-
-
+# CASE 1
+# aiohttp_pydantic не умеет работать с enum в query string,
+# т.е. он не создает для подобного поля схему в swagger документации
+# из-за этого появляется бесячий warning
 def _add_http_method_to_oas(
     oas: OpenApiSpec3, oas_path: PathItem, http_method: str, view: Type[PydanticView]
 ):
@@ -74,39 +121,3 @@ def _add_http_method_to_oas(
         _OASResponseBuilder(oas, oas_operation, status_code_descriptions).build(
             return_type
         )
-
-
-from functools import update_wrapper
-from inspect import iscoroutinefunction
-from typing import Callable, Iterable
-
-from aiohttp.web import json_response
-from pydantic import ValidationError
-from aiohttp_pydantic.injectors import AbstractInjector
-
-
-def inject_params(
-    handler, parse_func_signature: Callable[[Callable], Iterable[AbstractInjector]]
-):
-    """
-    Decorator to unpack the query string, route path, body and http header in
-    the parameters of the web handler regarding annotations.
-    """
-    injectors = parse_func_signature(handler)
-
-    async def wrapped_handler(self):
-        args = []
-        kwargs = {}
-        for injector in injectors:
-            try:
-                if iscoroutinefunction(injector.inject):
-                    await injector.inject(self.request, args, kwargs)
-                else:
-                    injector.inject(self.request, args, kwargs)
-            except ValidationError as error:
-                raise error
-
-        return await handler(self, *args, **kwargs)
-
-    update_wrapper(wrapped_handler, handler)
-    return wrapped_handler

@@ -25,7 +25,7 @@ def arguments(aiomisc_unused_port, migrated_postgres):
             '--log-level=debug',
             '--api-address=127.0.0.1',
             f'--api-port={aiomisc_unused_port}',
-            f'--pg-url={migrated_postgres}'
+            f'--pg-url={str(migrated_postgres.async_.url)}'
         ]
     )
 
@@ -41,17 +41,3 @@ async def api_client(aiohttp_client, arguments):
         yield client
     finally:
         await client.close()
-
-
-@pytest.fixture
-def migrated_postgres_connection(migrated_postgres):
-    """
-    Синхронное соединение со смигрированной БД.
-    """
-    engine = create_engine(migrated_postgres)
-    conn = engine.connect()
-    try:
-        yield conn
-    finally:
-        conn.close()
-        engine.dispose()

@@ -1,51 +1,39 @@
+import pytest
 from http import HTTPStatus
 
-import pytest
-
-from analyzer.utils.pg import MAX_INTEGER
 from analyzer.utils.testing import (
-    generate_visited_place,
-    generate_user_feedback,
-    post_record, get_visited_places, get_user_feedbacks
+    get_user_feedbacks, post_user_feedbacks,
+    get_visited_places, post_visited_places,
 )
-from analyzer.api.handlers import UserFeedbacks, UserVisitedPlaces
-from analyzer.api.schema import PostUserFeedbacksResponse, PostVisitedPlacesResponse, UserContext
+from analyzer.utils.generating_test_data import (
+    generate_visited_place, generate_user_feedback,
+)
 
 
-CASES = (
-    # Обработчик должен корректно добавлять запись места
+@pytest.mark.parametrize('place', (
+    # Обработчик должен корректно добавлять место
     generate_visited_place(),
-)
-
-
-@pytest.mark.parametrize('place', CASES)
+))
 async def test_get_user_feedbacks(api_client, place):
-    await post_record(
-        api_client, place,
-        UserVisitedPlaces, PostVisitedPlacesResponse,
-        HTTPStatus.CREATED
-    )
+    # Заносим user_email и place_uid через ручку
+    await post_visited_places(api_client, place)
 
+    # Генерируем фидбек на основе вставленных данные
     feedback = generate_user_feedback(
-        user_email=place['user_email'],
-        place_uid=place['place_uid']
+        user_email=place.get('user_email', None),
+        place_uid=place.get('place_uid', None)
     )
-    await post_record(
-        api_client, feedback,
-        UserFeedbacks, PostUserFeedbacksResponse,
-        HTTPStatus.CREATED
-    )
+    await post_user_feedbacks(api_client, feedback)
 
     feedbacks = await get_user_feedbacks(
-        api_client, place['user_email']
+        api_client, user_email=place['user_email']
     )
 
-    assert feedbacks == [feedback]
+    assert feedbacks == {'feedbacks': [feedback]}
 
 
 async def test_get_non_existing_email(api_client):
-    user_email = 'non_existing_email@yandex.ru'
+    user_email = 'non_existing_email@yandex.ruabs'
     await get_user_feedbacks(
-            api_client, user_email,
-            expected_status=HTTPStatus.BAD_REQUEST
+        api_client, HTTPStatus.BAD_REQUEST, user_email=user_email,
     )

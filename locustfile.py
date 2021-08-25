@@ -5,15 +5,13 @@ from http import HTTPStatus
 from faker import Faker
 from locust import HttpUser, constant, task
 
-from analyzer.api.schema import (
-    UserContext
-)
 from analyzer.api.handlers import (
-    UserVisitedPlaces, UserFeedbacks
+    UserVisitedPlaces, UserFeedbacks,
 )
-from analyzer.utils.testing import (
+from analyzer.utils.testing import url_for
+from analyzer.utils.generating_test_data import (
     generate_user_feedback,
-    generate_visited_place
+    generate_visited_place,
 )
 
 fake = Faker('ru_RU')
@@ -33,7 +31,6 @@ class AnalyzerTaskSet(HttpUser):
             if resp.status_code != expected_status:
                 resp.failure(f'expected status {expected_status}, '
                              f'got {resp.status_code}')
-            print(kwargs, resp.text)
             logging.info(
                 'round %r: %s %s, http status %d (expected %d), took %rs',
                 self.round, method, path, resp.status_code, expected_status,
@@ -52,20 +49,13 @@ class AnalyzerTaskSet(HttpUser):
                      name=route, json=data)
 
     def get_visited_places(self, user_email):
-        state = UserContext.ugc.value
-        latitude = float(fake.latitude())
-        longitude = float(fake.longitude())
-        zoom = random.uniform(2, 21)
-        device_width = 1440
-        device_height = 2392
-
         route = UserVisitedPlaces.URL_PATH
-        url = f'{route}?latitude={latitude}&longitude={longitude}&zoom={zoom}&device_width={device_width}&device_height={device_height}&state={state}&user_email={user_email}'
+        url = url_for(route, user_email=user_email)
         self.request('GET', url, HTTPStatus.OK, name=route)
 
     def get_user_feedbacks(self, user_email):
         route = UserFeedbacks.URL_PATH
-        url = f'{route}?user_email={user_email}'
+        url = url_for(route, user_email=user_email)
         self.request('GET', url, HTTPStatus.OK, name=route)
 
     @task
