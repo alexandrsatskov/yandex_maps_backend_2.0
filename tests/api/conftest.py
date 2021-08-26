@@ -1,8 +1,8 @@
 import pytest
 from alembic.command import upgrade
 
-from analyzer.api.__main__ import parser
-from analyzer.api.app import create_app
+from maps.api.__main__ import parser
+from maps.api.app import create_app
 
 
 @pytest.fixture

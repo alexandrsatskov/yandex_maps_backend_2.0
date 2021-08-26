@@ -4,17 +4,17 @@ services:
     restart: always
     image: postgres:12
     environment:
-      POSTGRES_USER: {{ analyzer_pg_user }}
-      POSTGRES_PASSWORD: {{ analyzer_pg_password }}
-      POSTGRES_DB: {{ analyzer_pg_dbname }}
+      POSTGRES_USER: {{ maps_pg_user }}
+      POSTGRES_PASSWORD: {{ maps_pg_password }}
+      POSTGRES_DB: {{ maps_pg_dbname }}
     volumes:
       - /var/lib/postgresql/data:/var/lib/postgresql/data
 
-  analyzer:
+  maps:
     restart: always
-    image: {{ analyzer_image }}
-    command: analyzer-api
+    image: {{ maps_image }}
+    command: maps-api
     ports:
       - 80:8081
     environment:
-      ANALYZER_PG_URL: postgresql://{{ analyzer_pg_user }}:{{ analyzer_pg_password }}@postgres/{{ analyzer_pg_dbname }}
+      MAPS_PG_URL: postgresql://{{ maps_pg_user }}:{{ maps_pg_password }}@postgres/{{ maps_pg_dbname }}

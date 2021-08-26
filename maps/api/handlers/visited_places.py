@@ -11,21 +11,21 @@ from pydantic import (
 from sqlalchemy import select, join, func, and_, between
 from sqlalchemy.dialects.postgresql import insert
 
-from analyzer.api import DEFAULT_PLACES
-from analyzer.api.handlers.base import BaseView
-from analyzer.api.schema import (
+from maps.api import DEFAULT_PLACES
+from maps.api.handlers.base import BaseView
+from maps.api.schema import (
     ErrorResponseSchema,
     GetVisitedPlacesResponse,
     PostVisitedPlacesRequest, PostVisitedPlacesResponse,
     ScreenResolution, UserContext, PlaceState
 )
-from analyzer.db.schema import (
+from maps.db.schema import (
     users_table as user_t,
     places_table as places_t,
     user_places_table as user_places_t,
     user_feedbacks_table as user_feedbacks_t
 )
-from analyzer.utils.emulator_specifications import EMULATOR_SCREEN, K_DICT
+from maps.utils.emulator_specifications import EMULATOR_SCREEN, K_DICT
 
 
 def get_screen_coordinate_bounds(

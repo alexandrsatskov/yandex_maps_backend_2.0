@@ -6,7 +6,7 @@ stages:
 services:
   - postgis/postgis
 variables:
-  POSTGRES_DB: analyzer
+  POSTGRES_DB: maps
   POSTGRES_USER: user
   POSTGRES_PASSWORD: hackme
   POSTGRES_HOST_AUTH_METHOD: trust

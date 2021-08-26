@@ -1,6 +1,6 @@
 import logging
 from http import HTTPStatus
-from typing import Optional, List, Dict, Any, Mapping
+from typing import Optional, Mapping
 
 from aiohttp.web_exceptions import (
     HTTPException, HTTPFound,

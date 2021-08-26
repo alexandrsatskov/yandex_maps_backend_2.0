@@ -1,4 +1,4 @@
-PROJECT_NAME ?= yandexmapsbackend
+PROJECT_NAME ?= maps
 VERSION = $(shell python3 setup.py --version | tr '+' '-')
 PROJECT_NAMESPACE ?= satskov
 REGISTRY_IMAGE ?= $(PROJECT_NAMESPACE)/$(PROJECT_NAME)
@@ -31,8 +31,8 @@ lint:
 	env/bin/pylama
 
 postgres:
-	docker stop analyzer-postgres || true
-	docker run --rm --detach --name=analyzer-postgres \
+	docker stop maps-postgres || true
+	docker run --rm --detach --name=maps-postgres \
 		--env POSTGRES_USER=user \
 		--env POSTGRES_PASSWORD=hackme \
 		--env POSTGRES_DB=analyzer \

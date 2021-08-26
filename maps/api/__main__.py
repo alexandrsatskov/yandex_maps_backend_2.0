@@ -1,4 +1,4 @@
-from analyzer.utils.monkey_patching_aiohttp_pydantic import (
+from maps.utils.monkey_patching_aiohttp_pydantic import (
     _add_http_method_to_oas, inject_params
 )
 # [START] monkey patching
@@ -21,11 +21,11 @@ from configargparse import ArgumentParser
 from setproctitle import setproctitle
 from yarl import URL
 
-from analyzer.api.app import create_app
-from analyzer.utils.argparse import clear_environ, positive_int
-from analyzer.utils.pg import DEFAULT_PG_URL
+from maps.api.app import create_app
+from maps.utils.argparse import clear_environ, positive_int
+from maps.utils.pg import DEFAULT_PG_URL
 
-ENV_VAR_PREFIX = 'ANALYZER_'
+ENV_VAR_PREFIX = 'MAPS_'
 
 
 parser = ArgumentParser(

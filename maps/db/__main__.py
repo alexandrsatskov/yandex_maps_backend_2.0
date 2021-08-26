@@ -9,8 +9,7 @@ import logging
 import os
 
 from alembic.config import CommandLine
-
-from analyzer.utils.pg import DEFAULT_PG_URL, make_alembic_config
+from maps.utils.pg import DEFAULT_PG_URL, make_alembic_config
 
 
 def main():
@@ -19,8 +18,8 @@ def main():
     alembic = CommandLine()
     alembic.parser.formatter_class = argparse.ArgumentDefaultsHelpFormatter
     alembic.parser.add_argument(
-        '--pg-url', default=os.getenv('ANALYZER_PG_URL', DEFAULT_PG_URL.replace('+asyncpg', '')),
-        help='Database URL [env var: ANALYZER_PG_URL]'
+        '--pg-url', default=os.getenv('MAPS_PG_URL', DEFAULT_PG_URL.replace('+asyncpg', '')),
+        help='Database URL [env var: MAPS_PG_URL]'
     )
 
     options = alembic.parser.parse_args()

@@ -5,9 +5,9 @@ from aiohttp.web_app import Application
 from configargparse import Namespace
 from aiohttp_pydantic import oas
 
-from analyzer.api.handlers import HANDLERS
-from analyzer.api.middleware import error_middleware
-from analyzer.utils.pg import setup_pg
+from maps.api.handlers import HANDLERS
+from maps.api.middleware import error_middleware
+from maps.utils.pg import setup_pg
 
 
 log = logging.getLogger(__name__)

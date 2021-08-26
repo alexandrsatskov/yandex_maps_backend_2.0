@@ -12,7 +12,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 CENSORED = '***'
-DEFAULT_PG_URL = 'postgresql+asyncpg://user:hackme@localhost/analyzer'
+DEFAULT_PG_URL = 'postgresql+asyncpg://user:hackme@localhost/maps'
 PROJECT_PATH = Path(__file__).parent.parent.resolve()
 
 log = logging.getLogger(__name__)

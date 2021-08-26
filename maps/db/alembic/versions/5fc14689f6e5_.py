@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 from geoalchemy2 import Geometry
 
-from analyzer.api import DEFAULT_PLACES
-from analyzer.db.schema import places_table as places_t
+from maps.api import DEFAULT_PLACES
+from maps.db.schema import places_table as places_t
 
 # revision identifiers, used by Alembic.
 revision = '5fc14689f6e5'

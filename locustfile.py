@@ -5,11 +5,11 @@ from http import HTTPStatus
 from faker import Faker
 from locust import HttpUser, constant, task
 
-from analyzer.api.handlers import (
+from maps.api.handlers import (
     UserVisitedPlaces, UserFeedbacks,
 )
-from analyzer.utils.testing import url_for
-from analyzer.utils.generating_test_data import (
+from maps.utils.testing import url_for
+from maps.utils.generating_test_data import (
     generate_user_feedback,
     generate_visited_place,
 )

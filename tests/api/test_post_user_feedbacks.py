@@ -1,11 +1,11 @@
 import pytest
 from http import HTTPStatus
 
-from analyzer.utils.testing import (
+from maps.utils.testing import (
     get_user_feedbacks, post_user_feedbacks,
     get_visited_places, post_visited_places,
 )
-from analyzer.utils.generating_test_data import (
+from maps.utils.generating_test_data import (
     generate_visited_place, generate_user_feedback,
 )
 

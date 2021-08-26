@@ -1,24 +1,24 @@
-- name: create directory for analyzer app
+- name: create directory for maps app
   file:
-    path: /etc/docker/compose/analyzer
+    path: /etc/docker/compose/maps
     state: directory
     mode: 0770
     owner: root
     group: docker
 
-- name: deploy docker-compose.yml for analyzer app
+- name: deploy docker-compose.yml for maps app
   template:
     src: docker-compose.yml.j2
-    dest: /etc/docker/compose/analyzer/docker-compose.yml
+    dest: /etc/docker/compose/maps/docker-compose.yml
     mode: 0640
     owner: root
     group: docker
   notify:
-    - restart analyzer
+    - restart maps
 
-- name: start & enable analyzer service
+- name: start & enable maps service
   service:
-    name: docker-compose@analyzer
+    name: docker-compose@maps
     # Сервис должен запускаться после перезагрузки
     enabled: yes
     # Сервис должен запуститься или быть уже запущен
@@ -41,11 +41,11 @@
 - name: apply database migrations
   docker_container:
     name: db_migrator
-    image: "{{ analyzer_image }}"
-    command: ["analyzer-db", "upgrade", "head"]
+    image: "{{ maps_image }}"
+    command: ["maps-db", "upgrade", "head"]
     networks:
-      - name: analyzer_default
+      - name: maps_default
     auto_remove: yes
     networks_cli_compatible: yes
     env:
-      ANALYZER_PG_URL: postgresql://{{ analyzer_pg_user }}:{{ analyzer_pg_password }}@postgres/{{ analyzer_pg_dbname }}
+      ANALYZER_PG_URL: postgresql://{{ maps_pg_user }}:{{ maps_pg_password }}@postgres/{{ maps_pg_dbname }}

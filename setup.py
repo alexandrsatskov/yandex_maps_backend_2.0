@@ -5,7 +5,7 @@ from pkg_resources import parse_requirements
 from setuptools import find_packages, setup
 
 
-module_name = 'analyzer'
+module_name = 'maps'
 
 # Модуль может быть еще не установлен (или установлена другая версия), поэтому
 # необходимо загружать __init__.py с помощью machinery.
@@ -33,7 +33,7 @@ setup(
     license=module.__license__,
     description=module.__doc__,
     long_description=open('README.rst').read(),
-    url='https://github.com/alvassin/backendschool2019',
+    url='https://gitlab.academy.yandex.net/project-19/yandex_maps_backend_2.0',
     platforms='all',
     classifiers=[
         'Intended Audience :: Developers',

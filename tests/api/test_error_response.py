@@ -7,11 +7,11 @@ import pytest
 from pydantic import validate_model
 from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp.web_request import Request
-from analyzer.api.handlers import UserFeedbacks
+from maps.api.handlers import UserFeedbacks
 
 
-from analyzer.api.app import create_app
-from analyzer.api.schema import ErrorResponseSchema
+from maps.api.app import create_app
+from maps.api.schema import ErrorResponseSchema
 
 
 async def unexpected_error(_: Request):

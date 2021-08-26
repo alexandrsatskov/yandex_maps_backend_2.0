@@ -7,13 +7,13 @@ from aiohttp.web_response import json_response
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
-from analyzer.api.handlers.base import BaseView
-from analyzer.api.schema import (
+from maps.api.handlers.base import BaseView
+from maps.api.schema import (
     ErrorResponseSchema,
     GetUserFeedbacksResponse,
     PostUserFeedbacksRequest, PostUserFeedbacksResponse,
 )
-from analyzer.db.schema import (
+from maps.db.schema import (
     user_feedbacks_table as user_feedbacks_t
 )
 

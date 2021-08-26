@@ -1,20 +1,17 @@
 from enum import EnumMeta
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Union, Type
+from typing import Any, Dict, Union
 from urllib.parse import urlparse, urlencode, parse_qsl, urlunparse
 
 from aiohttp.test_utils import TestClient
-from aiohttp.typedefs import StrOrURL
-from aiohttp.web_urldispatcher import DynamicResource
-from pydantic import validate_model, BaseModel
+from pydantic import validate_model
 
-from analyzer.api.handlers import (
+from maps.api.handlers import (
     UserVisitedPlaces, UserFeedbacks
 )
-from analyzer.api.schema import (
+from maps.api.schema import (
     GetVisitedPlacesResponse, PostVisitedPlacesResponse,
     GetUserFeedbacksResponse, PostUserFeedbacksResponse,
-    UserContext
 )
 
 

@@ -1,6 +1,6 @@
 ---
 
-- name: restart analyzer
+- name: restart maps
   service:
-      name: docker-compose@analyzer
+      name: docker-compose@maps
       state: restarted

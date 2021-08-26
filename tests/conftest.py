@@ -11,9 +11,9 @@ from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy_utils import create_database, drop_database
 
-from analyzer.utils.pg import DEFAULT_PG_URL, make_alembic_config
+from maps.utils.pg import DEFAULT_PG_URL, make_alembic_config
 
-PG_URL = os.getenv('CI_ANALYZER_PG_URL', DEFAULT_PG_URL)
+PG_URL = os.getenv('CI_MAPS_PG_URL', DEFAULT_PG_URL)
 
 
 @dataclass

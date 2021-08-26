@@ -160,11 +160,11 @@ def generate_k_dict(path: str) -> dict:
         Путь до файла
 
     """
-    with open(path, mode='w') as f:
-        f.writelines(s)
+    # with open(path, mode='w') as f:
+    #     f.writelines(s)
 
-    # if not (os.path.exists(path) and os.path.isfile(path)):
-    #     sys.exit(f'Не найден файл данных эмулятора {path} ¯\\_(ツ)_/¯')
+    if not (os.path.exists(path) and os.path.isfile(path)):
+        sys.exit(f'Не найден файл данных эмулятора {path} ¯\\_(ツ)_/¯')
 
     float_pattern = r'-?\d+\.?\d+'
     k_dict_ = {}

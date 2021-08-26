@@ -3,7 +3,7 @@ from aiohttp.web_exceptions import HTTPBadRequest
 from sqlalchemy import exists, select, and_
 from sqlalchemy.engine import Engine
 
-from analyzer.db.schema import (
+from maps.db.schema import (
     users_table as users_t,
     places_table as places_t,
     user_places_table as user_places_t,
