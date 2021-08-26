@@ -19,7 +19,7 @@ def main():
     alembic = CommandLine()
     alembic.parser.formatter_class = argparse.ArgumentDefaultsHelpFormatter
     alembic.parser.add_argument(
-        '--pg-url', default=os.getenv('ANALYZER_PG_URL', DEFAULT_PG_URL),
+        '--pg-url', default=os.getenv('ANALYZER_PG_URL', DEFAULT_PG_URL.replace('+asyncpg', '')),
         help='Database URL [env var: ANALYZER_PG_URL]'
     )
 

@@ -60,5 +60,4 @@ def make_alembic_config(cmd_opts: Union[Namespace, SimpleNamespace],
     if cmd_opts.pg_url:
         config.set_main_option('sqlalchemy.url', cmd_opts.pg_url)
 
-    print(config, type(config), str(config))
     return config

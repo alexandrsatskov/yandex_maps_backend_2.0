@@ -36,23 +36,9 @@ postgres:
 		--env POSTGRES_USER=user \
 		--env POSTGRES_PASSWORD=hackme \
 		--env POSTGRES_DB=analyzer \
-		--publish 5432:5432 postgis/postgis
-
-pgprod:
-	docker stop analyzer-postgres || true
-	docker run --detach --name=pgprod \
-		--env POSTGRES_USER=user \
-		--env POSTGRES_PASSWORD=hackme \
-		--env POSTGRES_DB=analyzer \
 		--env PGDATA=/var/lib/postgresql/data/pgdata \
  		--volume /mnt:/var/lib/postgresql/data \
 		--publish 5432:5432 postgis/postgis
-
-migrations:
-	(cd ./analyzer && alembic revision --autogenerate)
-
-migrate:
-	(cd ./analyzer && alembic upgrade head)
 
 pytest:
 	env/bin/pytest -vv --cov=analyzer --cov-report=term-missing tests -x

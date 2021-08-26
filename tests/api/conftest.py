@@ -1,6 +1,5 @@
 import pytest
 from alembic.command import upgrade
-from sqlalchemy import create_engine
 
 from analyzer.api.__main__ import parser
 from analyzer.api.app import create_app
