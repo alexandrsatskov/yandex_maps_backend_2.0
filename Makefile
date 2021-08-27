@@ -35,13 +35,13 @@ postgres:
 	docker run --rm --detach --name=maps-postgres \
 		--env POSTGRES_USER=user \
 		--env POSTGRES_PASSWORD=hackme \
-		--env POSTGRES_DB=analyzer \
+		--env POSTGRES_DB=maps \
 		--env PGDATA=/var/lib/postgresql/data/pgdata \
  		--volume /mnt:/var/lib/postgresql/data \
 		--publish 5432:5432 postgis/postgis
 
 pytest:
-	env/bin/pytest -vv --cov=analyzer --cov-report=term-missing tests -x
+	env/bin/pytest -vv --cov=maps --cov-report=term-missing tests -x
 
 sdist: clean
 	# официальный способ дистрибуции python-модулей

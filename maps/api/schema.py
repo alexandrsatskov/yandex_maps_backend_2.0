@@ -27,6 +27,7 @@ class ScreenResolution:
     height: Union[int, float]
 
 
+@unique
 class UserContext(str, Enum):
     default = 'DEFAULT'
     ugc = 'UGC'
@@ -80,7 +81,7 @@ class PostVisitedPlacesResponse(BaseModel):
 
 # <------------- UserFeedbacks ------------->
 class UserFeedbackSchema(BaseModel):
-    user_email: str
+    user_email: Optional[str] = None
     place_uid: str
     feedback_rate: conint(ge=0, le=5)
     feedback_text: str
@@ -96,3 +97,12 @@ class PostUserFeedbacksRequest(UserFeedbackSchema):
 
 class PostUserFeedbacksResponse(BaseModel):
     id: PositiveInt
+
+
+class DeleteUserFeedbacks(BaseModel):
+    user_email: str
+    place_uid: str
+
+
+class DeleteUserFeedbacksResponse(BaseModel):
+    feedbacks: List[DeleteUserFeedbacks]

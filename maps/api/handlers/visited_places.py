@@ -4,7 +4,7 @@ from typing import Tuple, Optional, Union
 from aiohttp.web_response import json_response
 
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r400, r201
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401
 from pydantic import (
     confloat
 )
@@ -25,57 +25,9 @@ from maps.db.schema import (
     user_places_table as user_places_t,
     user_feedbacks_table as user_feedbacks_t
 )
-from maps.utils.emulator_specifications import EMULATOR_SCREEN, K_DICT
-
-
-def get_screen_coordinate_bounds(
-    device: ScreenResolution,
-    latitude: float,
-    longitude: float,
-    zoom: float,
-) -> Tuple:
-    """
-    Получить примерные географические
-    координаты возле углов viewport'a
-
-    :param device:
-        Разрешение экрана в пикселях
-
-    :param latitude:
-        Центральная координата экрана, широта
-    :param longitude:
-        Центральная координата экрана, долгота
-
-    :param zoom:
-        Текущее значение приближения карты в приложении
-
-    :return:
-        Кортеж с граничными географическими значениями в формате:
-        (tl_lat, tl_lon, br_lat, br_lon)
-        **tl, br == top-left, bottom-right
-    """
-    zoom_float = zoom
-    zoom_int = int(zoom_float)
-    zoom_mod = 1 - (zoom_float % 1)
-
-    # sr == screen resolution
-    k_height_sr = device.height / EMULATOR_SCREEN.height
-    k_width_sr = device.width / EMULATOR_SCREEN.width
-
-    lat_quarter = (K_DICT[zoom_int]['lat_delta'] * k_height_sr) / 4
-    lon_quarter = (K_DICT[zoom_int]['lon_delta'] * k_width_sr) / 4
-
-    lat_additional = lat_quarter + (lat_quarter * zoom_mod)
-    lon_additional = lon_quarter + (lon_quarter * zoom_mod)
-
-    # Screen coordinate bounds
-    # tl == top-left, br == bottom-right
-    tl_lat = latitude + lat_additional
-    tl_lon = longitude - lon_additional
-
-    br_lat = latitude - lat_additional
-    br_lon = longitude + lon_additional
-    return tl_lat, tl_lon, br_lat, br_lon
+from maps.utils.emulator_specifications import (
+    EMULATOR_SCREEN, get_screen_coordinate_bounds,
+)
 
 
 class UserVisitedPlaces(PydanticView, BaseView):
@@ -95,9 +47,11 @@ class UserVisitedPlaces(PydanticView, BaseView):
         device_height: Optional[Union[int, float]] = EMULATOR_SCREEN.height,
         user_context: Optional[UserContext] = UserContext.ugc,
         *, token: Optional[str] = '',
-    ) -> Union[r200[GetVisitedPlacesResponse], r400[ErrorResponseSchema]]:
-        # TODO: add token, and json_response 401 (unauthorized)
-        # Return value
+    ) -> Union[r200[GetVisitedPlacesResponse]]:
+
+        user_email = await self.get_email(user_email, token)
+
+        # Returns value
         places = []
 
         if not await self.is_email_exists(user_email):
@@ -133,14 +87,14 @@ class UserVisitedPlaces(PydanticView, BaseView):
 
         places_stmt = (
             select(user_places_t.c.place_uid)
-                .select_from(
+            .select_from(
                 join(
                     user_places_t, places_wo_feedback_stmt,
                     user_places_t.c.place_uid == places_wo_feedback_stmt.c.place_uid,
                     isouter=True
                 )
             )
-                .where(
+            .where(
                 and_(
                     places_wo_feedback_stmt.c.place_uid.is_(None),
                     user_places_t.c.user_email == user_email
@@ -158,19 +112,19 @@ class UserVisitedPlaces(PydanticView, BaseView):
                 func.ST_X(places_t.c.coordinates).label('longitude'),
                 func.ST_Y(places_t.c.coordinates).label('latitude')
             ])
-                .select_from(
+            .select_from(
                 join(
                     places_t, places_stmt,
                     places_t.c.place_uid == places_stmt.c.place_uid,
                 )
             )
-                .where(
+            .where(
                 and_(
                     between(func.ST_X(places_t.c.coordinates), lon_lb, lon_ub),
                     between(func.ST_Y(places_t.c.coordinates), lat_lb, lat_ub),
                 )
             )
-                .order_by(
+            .order_by(
                 func.ST_Distance(
                     func.ST_GeomFromText(point, self.SRID),
                     places_t.c.coordinates
@@ -216,42 +170,44 @@ class UserVisitedPlaces(PydanticView, BaseView):
     async def post(
         self, place: PostVisitedPlacesRequest,
         *, token: Optional[str] = '',
-    ) -> Union[r201[PostVisitedPlacesResponse], r400[ErrorResponseSchema]]:
+    ) -> Union[r201[PostVisitedPlacesResponse]]:
+
+        user_email = place.user_email
+        place_uid = place.place_uid
+        place_id = place.place_id
+        coordinates = f'POINT({place.longitude} {place.latitude})'
+
+        user_email = await self.get_email(user_email, token)
 
         async with self.pg.begin() as conn:
-            user_email = place.user_email
-            place_uid = place.place_uid
-            place_id = place.place_id
-            coordinates = f'POINT({place.longitude} {place.latitude})'
-
             # Если email пользователя не найден,
             # добавляем новую запись в таблицу users
             stmt = (
                 insert(user_t)
-                    .values(user_email=user_email)
-                    .on_conflict_do_nothing()
+                .values(user_email=user_email)
+                .on_conflict_do_nothing()
             )
             await conn.execute(stmt)
 
             stmt = (
                 insert(places_t)
-                    .values(
+                .values(
                     place_uid=place_uid,
                     place_id=place_id,
                     coordinates=coordinates
                 )
-                    .on_conflict_do_nothing()
+                .on_conflict_do_nothing()
             )
             await conn.execute(stmt)
 
             stmt = (
                 insert(user_places_t)
-                    .values(
+                .values(
                     user_email=user_email,
                     place_uid=place_uid
                 )
-                    .returning(user_places_t.c.place_uid)
-                    .on_conflict_do_update(
+                .returning(user_places_t.c.place_uid)
+                .on_conflict_do_update(
                     index_elements=['user_email', 'place_uid'],
                     set_=dict(user_email=user_email, place_uid=place_uid),
                 )
