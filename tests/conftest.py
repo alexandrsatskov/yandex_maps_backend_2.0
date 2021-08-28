@@ -36,17 +36,22 @@ def postgres():
     """
     Создает временную БД для запуска теста.
     """
-    pg_engine = PostgresEngine()
 
     tmp_name = '.'.join([uuid.uuid4().hex, 'pytest'])
-    tmp_url = str(URL(str(pg_engine.sync.url)).with_path(tmp_name))
+    tmp_url = str(URL(PG_URL).with_path(tmp_name))
 
+    pg_engine = PostgresEngine(
+        sync=create_engine(tmp_url.replace('+asyncpg', '')),
+        async_=create_async_engine(tmp_url)
+    )
+
+    tmp_url = tmp_url.replace('+asyncpg', '')
     create_database(tmp_url)
 
     # Устанавливаем PostGis
-    # from sqlalchemy import text
-    # with pg_engine.sync.connect() as connection:
-    #     connection.execute(text("CREATE EXTENSION postgis;"))
+    from sqlalchemy import text
+    with pg_engine.sync.connect() as connection:
+        connection.execute(text("CREATE EXTENSION postgis;"))
 
     try:
         yield pg_engine

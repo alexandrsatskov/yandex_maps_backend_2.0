@@ -12,6 +12,7 @@ from maps.api.handlers import (
 from maps.api.schema import (
     GetVisitedPlacesResponse, PostVisitedPlacesResponse,
     GetUserFeedbacksResponse, PostUserFeedbacksResponse,
+    DeleteUserFeedbacksResponse,
 )
 
 
@@ -27,6 +28,23 @@ def url_for(url: str, **params) -> str:
     url_parse = url_parse._replace(query=url_new_query)
     new_url = urlunparse(url_parse)
     return new_url
+
+
+async def delete_user_feedbacks(
+    client: TestClient,
+    expected_status: Union[int, EnumMeta] = HTTPStatus.OK,
+    **url_params
+):
+    response = await client.delete(
+        url_for(UserFeedbacks.URL_PATH, **url_params)
+    )
+    assert response.status == expected_status
+
+    data = await response.json()
+    *_, errors = validate_model(DeleteUserFeedbacksResponse, data)
+    print(data, errors)
+    assert errors is None, errors
+    return data
 
 
 async def post_visited_places(

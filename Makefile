@@ -41,7 +41,7 @@ postgres:
 		--publish 5432:5432 postgis/postgis
 
 pytest:
-	env/bin/pytest -vv --cov=maps --cov-report=term-missing tests -x
+	env/bin/pytest -vv --cov=maps --cov-report=term-missing --lf tests -x
 
 sdist: clean
 	# официальный способ дистрибуции python-модулей

@@ -105,4 +105,4 @@ class DeleteUserFeedbacks(BaseModel):
 
 
 class DeleteUserFeedbacksResponse(BaseModel):
-    feedbacks: List[DeleteUserFeedbacks]
+    feedbacks: List[PostUserFeedbacksResponse]
