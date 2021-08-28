@@ -1,17 +1,11 @@
 image: snakepacker/python:all
 
-services:
-  - postgis/postgis
-variables:
-  POSTGRES_DB: maps
-  POSTGRES_USER: user
-  POSTGRES_PASSWORD: hackme
-  POSTGRES_HOST_AUTH_METHOD: trust
-  PGDATA: /var/lib/postgresql/data/pgdata
-
 test:
+  services:
+    - docker:dind
   variables:
     CI_MAPS_PG_URL: postgresql+asyncpg://user:hackme@localhost/maps
   script:
     - make devenv
+    - make postgres
     - make pytest
