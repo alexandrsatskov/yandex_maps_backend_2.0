@@ -1,3 +1,5 @@
+image: snakepacker/python:all
+
 services:
   - postgis/postgis
 variables:
@@ -8,7 +10,6 @@ variables:
   PGDATA: /var/lib/postgresql/data/pgdata
 
 test:
-  image: snakepacker/python:all
   variables:
     CI_MAPS_PG_URL: postgresql+asyncpg://user:hackme@localhost/maps
   script:
