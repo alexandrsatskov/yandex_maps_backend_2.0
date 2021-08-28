@@ -16,9 +16,16 @@ cache:
 
 before_script:
   - make devenv
-  - make postgres
 
 test:
+  services:
+    - postgis/postgis
+  variables:
+    POSTGRES_DB: maps
+    POSTGRES_USER: user
+    POSTGRES_PASSWORD: hackme
+    POSTGRES_HOST_AUTH_METHOD: trust
+    PGDATA: /var/lib/postgresql/data/pgdata
   script:
     - make pytest
 
