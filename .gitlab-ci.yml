@@ -1,25 +1,25 @@
-# Общие настройки
+# Official language image. Look for the different tagged releases at:
+# https://hub.docker.com/r/library/python/tags/
+image: python:latest
 
-stages:
-  - build
-
-services:
-  - postgis/postgis
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
 variables:
-  POSTGRES_DB: maps
-  POSTGRES_USER: user
-  POSTGRES_PASSWORD: hackme
-  POSTGRES_HOST_AUTH_METHOD: trust
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-backend:build:python:
-  stage: build
-  image: snakepacker/python:all
-  rules:
-    - if: $CI_COMMIT_BRANCH
-  before_script:
-    - python3.8 -m venv env
-    - env/bin/pip install -U pip
-    - env/bin/pip install -U '.[dev]'
-    - source env/bin/activate
+# If you want to also cache the installed packages, you have to install
+# them in a virtualenv and cache it as well.
+cache:
+  paths:
+    - .cache/pip
+    - env/
+
+before_script:
+  - make devenv
+  - make postgres
+
+test:
   script:
-    - pytest -vv
+    - make pytest
+
+
