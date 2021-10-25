@@ -32,7 +32,7 @@ setup(
     author_email=module.__email__,
     license=module.__license__,
     description=module.__doc__,
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
     url='https://gitlab.academy.yandex.net/project-19/yandex_maps_backend_2.0',
     platforms='all',
     classifiers=[
